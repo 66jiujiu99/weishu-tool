@@ -329,16 +329,16 @@
             position: absolute;
             background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 50%, #e9ecef 100%);
             border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             z-index: 1000;
-            min-width: 280px;
-            max-width: 350px;
+            min-width: 420px;
+            max-width: 550px;
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
-            pointer-events: none;
+            pointer-events: auto;
             transform: scale(0.9);
         }
 
@@ -351,82 +351,90 @@
         .tooltip-header {
             display: flex;
             align-items: center;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
             border-bottom: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .tooltip-avatar {
-            width: 50px;
-            height: 50px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid #4a9eff;
-            margin-right: 12px;
+            margin-right: 20px;
         }
 
         .tooltip-info h4 {
             color: #4a9eff;
-            font-size: 16px;
-            margin: 0 0 4px 0;
+            font-size: 22px;
+            margin: 0 0 8px 0;
         }
 
         .tooltip-tier {
             color: #ff6b35;
-            font-size: 12px;
+            font-size: 16px;
             font-weight: bold;
         }
 
         .tooltip-covenants {
-            margin: 10px 0;
+            margin: 12px 0;
         }
 
         .tooltip-covenants h5 {
             color: #4a9eff;
-            font-size: 13px;
-            margin: 0 0 6px 0;
+            font-size: 17px;
+            margin: 0 0 10px 0;
         }
 
         .tooltip-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 4px;
+            gap: 8px;
         }
 
         .tooltip-tag {
             background: rgba(74, 158, 255, 0.15);
             color: #4a9eff;
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 10px;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 16px;
             border: 1px solid rgba(74, 158, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tooltip-tag:hover {
+            background: rgba(74, 158, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(74, 158, 255, 0.2);
         }
 
         .tooltip-trait {
-            margin-top: 10px;
+            margin-top: 12px;
         }
 
         .tooltip-trait h5 {
             color: #4a9eff;
-            font-size: 13px;
-            margin: 0 0 6px 0;
+            font-size: 17px;
+            margin: 0 0 10px 0;
         }
 
         .tooltip-trait-desc {
             background: rgba(255, 255, 255, 0.7);
-            padding: 8px;
-            border-radius: 8px;
+            padding: 15px;
+            border-radius: 10px;
             border: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 11px;
-            line-height: 1.4;
+            font-size: 16px;
+            line-height: 1.6;
             color: #555555;
         }
 
         .tooltip-trait-category {
             color: #ff6b35;
             font-weight: bold;
-            margin-bottom: 4px;
-            font-size: 11px;
+            margin-bottom: 8px;
+            font-size: 16px;
         }
 
         /* 滚动条样式 */
@@ -650,7 +658,7 @@
                 
                 operatorCard.addEventListener('click', () => showOperatorDetail(operator, event));
                 operatorCard.addEventListener('mouseenter', () => showOperatorDetail(operator, event));
-                operatorCard.addEventListener('mouseleave', hideOperatorDetail);
+                operatorCard.addEventListener('mouseleave', () => hideOperatorDetail());
                 
                 operatorsGrid.appendChild(operatorCard);
             });
@@ -659,12 +667,25 @@
             operatorsSection.appendChild(operatorsGrid);
         }
 
+        let tooltipTimeout = null;
+        let currentTooltipOperator = null;
+        let isMouseOverTooltip = false;
+
         // 显示干员详情
         function showOperatorDetail(operator, event) {
+            currentTooltipOperator = operator;
+            isMouseOverTooltip = false;
+            
+            // 清除之前的隐藏定时器
+            if (tooltipTimeout) {
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = null;
+            }
+            
             const tooltip = document.getElementById('operatorTooltip');
             
             const covenantsHtml = operator.covenants.map(covenant => 
-                `<span class="tooltip-tag">${covenant}</span>`
+                `<span class="tooltip-tag" data-covenant="${covenant}">${covenant}</span>`
             ).join('');
             
             tooltip.innerHTML = `
@@ -692,17 +713,13 @@
                 </div>
             `;
             
-            // 先设置初始状态
-            tooltip.style.opacity = '0';
-            tooltip.style.visibility = 'hidden';
-            tooltip.style.transform = 'scale(0.9)';
-            
             // 计算位置
             const rect = event.target.getBoundingClientRect();
             
             // 临时显示以获取尺寸
-            tooltip.style.visibility = 'visible';
+            tooltip.classList.add('show');
             const tooltipRect = tooltip.getBoundingClientRect();
+            tooltip.classList.remove('show');
             
             let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
             let top = rect.top - tooltipRect.height - 10;
@@ -721,18 +738,56 @@
             
             // 显示动画
             requestAnimationFrame(() => {
-                tooltip.style.opacity = '1';
-                tooltip.style.transform = 'scale(1)';
+                tooltip.classList.add('show');
             });
+            
+            // 添加盟约标签点击事件
+            setTimeout(() => {
+                const covenantTags = tooltip.querySelectorAll('.tooltip-tag');
+                covenantTags.forEach(tag => {
+                    tag.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const covenantName = tag.dataset.covenant;
+                        selectCovenant(covenantName);
+                        hideOperatorDetail();
+                    });
+                });
+            }, 50);
         }
 
         // 隐藏干员详情
         function hideOperatorDetail() {
-            const tooltip = document.getElementById('operatorTooltip');
-            tooltip.style.opacity = '0';
-            tooltip.style.visibility = 'hidden';
-            tooltip.style.transform = 'scale(0.9)';
+            if (isMouseOverTooltip) {
+                return;
+            }
+            
+            tooltipTimeout = setTimeout(() => {
+                if (!isMouseOverTooltip) {
+                    const tooltip = document.getElementById('operatorTooltip');
+                    tooltip.classList.remove('show');
+                    currentTooltipOperator = null;
+                }
+                tooltipTimeout = null;
+            }, 100);
         }
+
+        // 给悬浮框添加鼠标事件
+        document.addEventListener('DOMContentLoaded', () => {
+            const tooltip = document.getElementById('operatorTooltip');
+            
+            tooltip.addEventListener('mouseenter', () => {
+                isMouseOverTooltip = true;
+                if (tooltipTimeout) {
+                    clearTimeout(tooltipTimeout);
+                    tooltipTimeout = null;
+                }
+            });
+            
+            tooltip.addEventListener('mouseleave', () => {
+                isMouseOverTooltip = false;
+                hideOperatorDetail();
+            });
+        });
 
         // 初始化
         loadData();
