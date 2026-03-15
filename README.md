@@ -13,6 +13,8 @@
 python -m http.server 8080
 ```
 
+如果没有安装python，可以直接打开powershell，输入：`python`，会跳转到Microsoft Store，安装python即可。
+
 3. 打开浏览器访问：`http://localhost:8080`
 
 ### 方法二：使用Node.js
