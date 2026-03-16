@@ -17,12 +17,13 @@ reader = easyocr.Reader(
     ["ch_sim", "en"], gpu=True
 )  # 这里直接初始化了 GPU 模式的 Reader，确保后续 OCR 识别能使用 GPU 加速
 ROI_CONFIG = {
-    "干员": (5, 165, 192, 46),
-    "阶位": (248, 153, 63, 50),
-    "分类": (55, 565, 315, 31),
-    "描述": (14, 600, 403, 99),
-    "盟约": (25, 724, 90, 306),
+    "干员": (10, 137, 202, 52),
+    "阶位": (266, 128, 69, 50),
+    "分类": (61, 567, 118, 41),
+    "描述": (17, 607, 442, 147),
+    "盟约": (13, 686, 116, 394),
 }  # {"键名" : (x, y, w, h)}
+# {'干员': (10, 137, 202, 52), '阶位': (266, 128, 69, 50), '分类': (61, 567, 118, 41), '描述': (17, 607, 442, 147), '盟约': (13, 686, 116, 394)}
 
 
 def get_tags(description):
@@ -65,7 +66,7 @@ def ocr_and_save():
         # OCR识别
         text_list = reader.readtext(crop, detail=0)
         raw_text_map[key] = " ".join(text_list)
-    with open("data.json", "r", encoding="utf-8") as f:
+    with open("data_干员.json", "r", encoding="utf-8") as f:
         data = json.load(f)
 
     new_row = {
@@ -73,14 +74,15 @@ def ocr_and_save():
         "特质": {
             "分类": raw_text_map["分类"],
             "tag": get_tags(raw_text_map["描述"]),
-            "描述": raw_text_map["描述"],
+            "描述": raw_text_map["描述"].replace(" ", ""),
         },
         "阶位": raw_text_map["阶位"],
     }
     print(f"\n[!] 识别结果 {raw_text_map['干员']}:\n{new_row}")
     data[raw_text_map["干员"]] = new_row
-    with open("data.json", "w", encoding="utf-8") as f:
+    with open("data_干员.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+
 
 def get_mengye():
     print("\n[!] 正在识别区域...")
@@ -99,18 +101,19 @@ def get_mengye():
         data = json.load(f)
     new_row = {
         "激活需要人数": raw_text_map["激活需要人数"],
-        "描述": raw_text_map["描述"]
+        "描述": raw_text_map["描述"],
     }
     print(f"\n[!] 识别结果 {raw_text_map['盟约']}:\n{new_row}")
     data[raw_text_map["盟约"]] = new_row
     with open("data_盟约.json", "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)    
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
 
 def on_press(key):
     try:
         # 监听 Enter 键 (Key.enter)
         if key == keyboard.Key.enter:
-            get_mengye()
+            ocr_and_save()
         # 额外加一个退出键，比如 ESC
         if key == keyboard.Key.esc:
             print("退出程序...")
