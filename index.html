@@ -574,19 +574,264 @@
             font-style: italic;
         }
 
-        /* 响应式设计 */
+        /* 响应式设计 - 平板 */
         @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
+
             .container {
                 flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+                padding: 10px;
+                gap: 15px;
             }
-            
+
+            .left-panel {
+                order: 1;
+                gap: 15px;
+            }
+
             .right-panel {
                 width: 100%;
                 order: 2;
+                padding: 15px;
             }
-            
-            .left-panel {
-                order: 1;
+
+            .covenant-info {
+                min-height: auto;
+                max-height: none;
+                padding: 15px;
+            }
+
+            .covenant-info h2 {
+                font-size: 20px;
+            }
+
+            .operators-section {
+                padding: 15px;
+            }
+
+            .operators-grid {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                gap: 10px;
+                padding: 5px;
+            }
+
+            .operator-avatar {
+                width: 50px;
+                height: 50px;
+            }
+
+            .operator-name {
+                font-size: 11px;
+            }
+
+            .right-panel h3 {
+                font-size: 18px;
+                margin-bottom: 15px;
+            }
+
+            .covenant-item {
+                padding: 10px;
+            }
+
+            .covenant-icon {
+                width: 35px;
+                height: 35px;
+            }
+
+            .covenant-name {
+                font-size: 13px;
+            }
+
+            .search-section {
+                margin-bottom: 15px;
+                padding-bottom: 10px;
+            }
+
+            .search-input {
+                padding: 10px 35px 10px 12px;
+                font-size: 16px; /* 防止iOS缩放 */
+            }
+
+            .search-results {
+                max-height: 250px;
+            }
+
+            .operator-tooltip {
+                min-width: 300px;
+                max-width: 90vw;
+                padding: 15px;
+                font-size: 14px;
+            }
+
+            .tooltip-avatar {
+                width: 60px;
+                height: 60px;
+            }
+
+            .tooltip-info h4 {
+                font-size: 18px;
+            }
+
+            .tooltip-tier {
+                font-size: 14px;
+            }
+
+            .tooltip-covenants h5,
+            .tooltip-trait h5 {
+                font-size: 15px;
+            }
+
+            .tooltip-tag {
+                font-size: 14px;
+                padding: 5px 10px;
+            }
+
+            .tooltip-trait-desc {
+                font-size: 14px;
+                padding: 10px;
+            }
+        }
+
+        /* 响应式设计 - 手机 */
+        @media (max-width: 480px) {
+            .container {
+                padding: 8px;
+                gap: 10px;
+            }
+
+            .covenant-info h2 {
+                font-size: 18px;
+            }
+
+            .covenant-details .requirement,
+            .covenant-details .description {
+                font-size: 14px;
+            }
+
+            .operators-section h3,
+            .right-panel h3 {
+                font-size: 16px;
+            }
+
+            .operators-grid {
+                grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+                gap: 8px;
+            }
+
+            .operator-card {
+                padding: 8px 5px;
+            }
+
+            .operator-avatar {
+                width: 45px;
+                height: 45px;
+                margin-bottom: 5px;
+            }
+
+            .operator-name {
+                font-size: 10px;
+            }
+
+            .operator-tier {
+                font-size: 9px;
+            }
+
+            .covenant-item {
+                padding: 8px;
+            }
+
+            .covenant-icon {
+                width: 30px;
+                height: 30px;
+                margin-right: 10px;
+            }
+
+            .covenant-name {
+                font-size: 12px;
+            }
+
+            .search-hint {
+                font-size: 10px;
+            }
+
+            .search-result-item {
+                padding: 8px;
+            }
+
+            .search-result-avatar {
+                width: 35px;
+                height: 35px;
+                margin-right: 10px;
+            }
+
+            .search-result-name {
+                font-size: 13px;
+            }
+
+            .operator-tooltip {
+                min-width: 280px;
+                max-width: 95vw;
+                padding: 12px;
+                border-radius: 10px;
+            }
+
+            .tooltip-avatar {
+                width: 50px;
+                height: 50px;
+                margin-right: 12px;
+            }
+
+            .tooltip-info h4 {
+                font-size: 16px;
+            }
+
+            .tooltip-tier {
+                font-size: 13px;
+            }
+
+            .tooltip-covenants h5,
+            .tooltip-trait h5 {
+                font-size: 14px;
+                margin-bottom: 8px;
+            }
+
+            .tooltip-tag {
+                font-size: 13px;
+                padding: 4px 8px;
+                border-radius: 10px;
+            }
+
+            .tooltip-trait-desc {
+                font-size: 13px;
+                padding: 8px;
+            }
+
+            .tooltip-trait-category {
+                font-size: 13px;
+            }
+        }
+
+        /* 触摸设备优化 */
+        @media (hover: none) and (pointer: coarse) {
+            .operator-card:hover {
+                transform: none;
+            }
+
+            .covenant-item:hover {
+                transform: none;
+            }
+
+            .search-result-item:hover {
+                transform: none;
+            }
+
+            .tooltip-tag:hover {
+                transform: none;
+                box-shadow: none;
             }
         }
     </style>
@@ -958,8 +1203,9 @@
             // 解析查询表达式
             const matchOperator = (operatorName, operator) => {
                 const traitCategory = operator['特质']?.['分类'] || '';
+                const traitTags = operator['特质']?.['tag']?.join(' ') || '';
                 const covenants = operator['盟约']?.join(' ') || '';
-                const text = (operatorName + ' ' + traitCategory + ' ' + covenants).toLowerCase();
+                const text = (operatorName + ' ' + traitCategory + ' ' + traitTags + ' ' + covenants).toLowerCase();
                 return text;
             };
 

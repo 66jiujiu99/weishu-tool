@@ -2,37 +2,9 @@
 
 一个基于纯静态HTML的明日方舟卫戍协议干员和盟约信息展示网页，帮助萌新快速了解干员盟约信息，避免手忙脚乱。
 
-## 快速开始
+## 使用连接
 
-### 方法一：使用Python HTTP服务器（推荐）
-
-1. 确保已安装Python 3.x
-2. 在项目根目录运行：
-
-```bash
-python -m http.server 8080
-```
-
-如果没有安装python，可以直接打开powershell，输入：`python`，会跳转到Microsoft Store，安装python即可。或者直接使用Microsoft Store搜索安装。
-
-3. 打开浏览器访问：`http://localhost:8080`
-
-![下载第一个就行](image/README/1.png)
-
-### 方法二：使用Node.js
-
-```bash
-npx http-server -p 8080
-```
-
-### 方法三：使用VS Code Live Server插件
-
-1. 安装Live Server插件
-2. 右键 `index.html`选择"Open with Live Server"
-
-## 注意事项
-
-⚠️ **重要**：请不要直接双击打开HTML文件，由于浏览器安全策略（CORS），无法从本地文件系统加载JSON数据，会导致页面无数据显示。
+[明日方舟-卫戍协议](https://66jiujiu99.github.io/weishu-tool/)
 
 ## 功能一览
 
