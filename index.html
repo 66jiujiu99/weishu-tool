@@ -114,6 +114,18 @@
             box-shadow: 0 5px 15px rgba(74, 158, 255, 0.3);
         }
 
+        .operator-card.highlighted {
+            background: rgba(255, 215, 0, 0.4);
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
         .operator-avatar {
             width: 60px;
             height: 60px;
@@ -941,7 +953,7 @@
         }
 
         // 选择盟约
-        function selectCovenant(covenantName) {
+        function selectCovenant(covenantName, highlightOperator = null) {
             currentCovenant = covenantName;
             
             // 更新选中状态
@@ -954,7 +966,7 @@
             showCovenantInfo(covenantName);
             
             // 显示相关干员
-            showOperators(covenantName);
+            showOperators(covenantName, highlightOperator);
         }
 
         // 显示盟约信息
@@ -977,7 +989,7 @@
         }
 
         // 显示相关干员
-        function showOperators(covenantName) {
+        function showOperators(covenantName, highlightOperator = null) {
             const operatorsSection = document.getElementById('operatorsSection');
             const operators = [];
             
@@ -1031,6 +1043,8 @@
                 tier.className = 'operator-tier';
                 tier.textContent = operator.tier;
                 
+                operatorCard.dataset.operator = operator.name;
+                
                 operatorCard.appendChild(avatar);
                 operatorCard.appendChild(name);
                 operatorCard.appendChild(tier);
@@ -1044,6 +1058,23 @@
             
             operatorsSection.innerHTML = '<h3>干员列表</h3>';
             operatorsSection.appendChild(operatorsGrid);
+            
+            // 如果有需要高亮的干员，执行高亮
+            if (highlightOperator) {
+                setTimeout(() => {
+                    const operatorCard = document.querySelector(`.operators-grid .operator-card[data-operator="${highlightOperator}"]`);
+                    if (operatorCard) {
+                        // 清除之前的高亮
+                        document.querySelectorAll('.operator-card.highlighted').forEach(card => {
+                            card.classList.remove('highlighted');
+                        });
+                        // 高亮当前干员
+                        operatorCard.classList.add('highlighted');
+                        // 滚动到可视区域
+                        // operatorCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 50);
+            }
         }
 
         let tooltipTimeout = null;
@@ -1339,15 +1370,29 @@
                 item.addEventListener('click', () => {
                     const operatorName = item.dataset.operator;
                     const operator = operatorData[operatorName];
-                    const operatorObj = {
-                        name: operatorName,
-                        tier: operator['阶位'],
-                        covenants: operator['盟约'],
-                        trait: operator['特质']
-                    };
-                    // 点击后选中该干员的第一个盟约
-                    if (operatorObj.covenants && operatorObj.covenants.length > 0) {
-                        selectCovenant(operatorObj.covenants[0]);
+                    
+                    // 先尝试在当前显示的干员列表中高亮
+                    const operatorCard = document.querySelector(`.operators-grid .operator-card[data-operator="${operatorName}"]`);
+                    if (operatorCard) {
+                        // 清除之前的高亮
+                        document.querySelectorAll('.operator-card.highlighted').forEach(card => {
+                            card.classList.remove('highlighted');
+                        });
+                        // 高亮当前干员
+                        operatorCard.classList.add('highlighted');
+                        // 滚动到可视区域
+                        // operatorCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        // 如果当前列表中没有，切换到该干员的第一个盟约并高亮显示
+                        const operatorObj = {
+                            name: operatorName,
+                            tier: operator['阶位'],
+                            covenants: operator['盟约'],
+                            trait: operator['特质']
+                        };
+                        if (operatorObj.covenants && operatorObj.covenants.length > 0) {
+                            selectCovenant(operatorObj.covenants[0], operatorName);
+                        }
                     }
                 });
             });
