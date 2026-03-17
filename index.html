@@ -135,6 +135,116 @@
             margin-top: 4px;
         }
 
+        /* 搜索区域 */
+        .search-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .search-input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 2px solid rgba(74, 158, 255, 0.3);
+            border-radius: 10px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .search-clear-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: rgba(74, 158, 255, 0.15);
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #4a9eff;
+            transition: all 0.2s ease;
+        }
+
+        .search-clear-btn:hover {
+            background: rgba(74, 158, 255, 0.3);
+        }
+
+        .search-clear-btn.show {
+            display: flex;
+        }
+
+        .search-hint {
+            font-size: 11px;
+            color: #888;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .search-results {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .search-result-item:hover {
+            background: rgba(74, 158, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .search-result-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #4a9eff;
+            margin-right: 12px;
+        }
+
+        .search-result-info {
+            flex: 1;
+        }
+
+        .search-result-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .search-result-tag {
+            font-size: 12px;
+            color: #ff6b35;
+        }
+
+        .search-result-match {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+        }
+
         /* 右侧盟约列表 */
         .right-panel {
             width: 300px;
@@ -499,6 +609,16 @@
         
         <!-- 右侧盟约列表 -->
         <div class="right-panel">
+            <h3>干员搜索</h3>
+            <div class="search-section">
+                <div class="search-input-wrapper">
+                    <input type="text" class="search-input" id="searchInput" placeholder="输入关键词或使用高级语法">
+                    <button class="search-clear-btn" id="searchClearBtn">&times;</button>
+                </div>
+                <div class="search-hint">支持: and(与) or(或) not(非) 以及括号组合</div>
+                <div class="search-results" id="searchResults"></div>
+            </div>
+            
             <h3>盟约列表</h3>
             <div class="covenant-list" id="covenantList"></div>
         </div>
@@ -789,8 +909,205 @@
             });
         });
 
+        // 设置搜索功能
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            const searchClearBtn = document.getElementById('searchClearBtn');
+
+            let searchTimeout = null;
+
+            // 输入事件
+            searchInput.addEventListener('input', (e) => {
+                const keyword = e.target.value.trim();
+
+                // 显示/隐藏清除按钮
+                if (keyword) {
+                    searchClearBtn.classList.add('show');
+                } else {
+                    searchClearBtn.classList.remove('show');
+                }
+
+                // 清除之前的搜索定时器
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+
+                // 空关键词时清空结果
+                if (!keyword) {
+                    searchResults.innerHTML = '';
+                    return;
+                }
+
+                // 延迟搜索，避免频繁搜索
+                searchTimeout = setTimeout(() => {
+                    performAdvancedSearch(keyword);
+                }, 300);
+            });
+
+            // 清除按钮点击事件
+            searchClearBtn.addEventListener('click', () => {
+                clearSearch();
+            });
+        }
+
+        // 高级搜索 - 支持布尔逻辑
+        function performAdvancedSearch(query) {
+            const results = [];
+
+            // 解析查询表达式
+            const matchOperator = (operatorName, operator) => {
+                const traitCategory = operator['特质']?.['分类'] || '';
+                const covenants = operator['盟约']?.join(' ') || '';
+                const text = (operatorName + ' ' + traitCategory + ' ' + covenants).toLowerCase();
+                return text;
+            };
+
+            // 布尔表达式解析器
+            const evaluateExpression = (operatorName, operator, expr) => {
+                const text = matchOperator(operatorName, operator);
+                return evaluateBoolExpr(text, expr.toLowerCase());
+            };
+
+            // 递归解析布尔表达式
+            function evaluateBoolExpr(text, expr) {
+                expr = expr.trim();
+                
+                // 处理括号
+                while (expr.includes('(')) {
+                    const start = expr.lastIndexOf('(');
+                    const end = expr.indexOf(')', start);
+                    if (end === -1) break;
+                    
+                    const subExpr = expr.substring(start + 1, end);
+                    const result = evaluateBoolExpr(text, subExpr);
+                    expr = expr.substring(0, start) + (result ? ' true ' : ' false ') + expr.substring(end + 1);
+                }
+
+                // 按 or 分割
+                const orParts = expr.split(/\s+or\s+/);
+                for (let part of orParts) {
+                    if (evaluateAndExpr(text, part.trim())) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // 处理 and 表达式
+            function evaluateAndExpr(text, expr) {
+                const andParts = expr.split(/\s+and\s+/);
+                for (let part of andParts) {
+                    part = part.trim();
+                    if (part === 'true') continue;
+                    if (part === 'false') return false;
+                    
+                    // 处理 not
+                    if (part.startsWith('not ')) {
+                        const term = part.substring(4).trim();
+                        if (text.includes(term)) return false;
+                    } else {
+                        if (!text.includes(part)) return false;
+                    }
+                }
+                return true;
+            }
+
+            // 遍历所有干员
+            Object.keys(operatorData).forEach(operatorName => {
+                const operator = operatorData[operatorName];
+                
+                if (evaluateExpression(operatorName, operator, query)) {
+                    const traitCategory = operator['特质']?.['分类'] || '';
+                    const text = (operatorName + ' ' + traitCategory).toLowerCase();
+                    
+                    // 判断匹配类型
+                    const nameMatch = operatorName.toLowerCase().includes(query.toLowerCase().replace(/\s+(and|or|not)\s+/g, ' ').trim());
+                    
+                    results.push({
+                        name: operatorName,
+                        tier: operator['阶位'],
+                        covenants: operator['盟约'],
+                        trait: operator['特质'],
+                        matchType: nameMatch ? 'name' : 'tag'
+                    });
+                }
+            });
+
+            // 按阶位排序
+            results.sort((a, b) => {
+                const tierOrder = {'6阶': 6, '5阶': 5, '4阶': 4, '3阶': 3, '2阶': 2, '1阶': 1};
+                return (tierOrder[b.tier] || 0) - (tierOrder[a.tier] || 0);
+            });
+
+            // 显示搜索结果
+            renderSearchResults(results, query);
+        }
+
+        // 渲染搜索结果
+        function renderSearchResults(results, keyword) {
+            const searchResults = document.getElementById('searchResults');
+
+            if (results.length === 0) {
+                searchResults.innerHTML = '<div class="empty-state" style="padding: 20px; font-size: 14px;">未找到匹配结果</div>';
+                return;
+            }
+
+            let html = '';
+
+            results.forEach(operator => {
+                const matchText = operator.matchType === 'name'
+                    ? `名称匹配`
+                    : `特质: ${operator.trait['分类']}`;
+
+                html += `
+                    <div class="search-result-item" data-operator="${operator.name}">
+                        <img class="search-result-avatar" src="images/干员/${operator.name}.png" alt="${operator.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM0YTRhZmYiLz4KPHRleHQgeD0iMjAiIHk9IjI1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1zaXplPSIxMCI+Py8vdGV4dD4KPC9zdmc+';" />
+                        <div class="search-result-info">
+                            <div class="search-result-name">${operator.name}</div>
+                            <div class="search-result-tag">${operator.tier}</div>
+                            <div class="search-result-match">${matchText}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            searchResults.innerHTML = html;
+
+            // 绑定点击事件
+            searchResults.querySelectorAll('.search-result-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const operatorName = item.dataset.operator;
+                    const operator = operatorData[operatorName];
+                    const operatorObj = {
+                        name: operatorName,
+                        tier: operator['阶位'],
+                        covenants: operator['盟约'],
+                        trait: operator['特质']
+                    };
+                    // 点击后选中该干员的第一个盟约
+                    if (operatorObj.covenants && operatorObj.covenants.length > 0) {
+                        selectCovenant(operatorObj.covenants[0]);
+                    }
+                });
+            });
+        }
+
+        // 清除搜索
+        function clearSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const searchResults = document.getElementById('searchResults');
+            const searchClearBtn = document.getElementById('searchClearBtn');
+            searchInput.value = '';
+            searchResults.innerHTML = '';
+            searchClearBtn.classList.remove('show');
+        }
+
         // 初始化
         loadData();
+
+        // 设置搜索功能
+        setupSearch();
     </script>
 </body>
 </html>
